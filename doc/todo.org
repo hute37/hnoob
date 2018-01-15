@@ -1,0 +1,365 @@
+-#+TITLE: CDATA: ContactLab Data Project
+
+
+* S-009
+** DONE PROD Configuration
+*** DONE Configuration.API
+**** DONE database
+**** DONE external services
+**** DONE internal services
+**** DONE logging
+**** DONE smoke tests
+**** DONE capistrano
+**** DONE init
+*** DONE Configuration.Sewer
+**** DONE database
+**** DONE external services
+**** DONE internal services
+**** DONE logging
+**** DONE smoke tests
+**** DONE capistrano
+**** DONE init
+*** DONE Configuration.Scheduler
+**** DONE database
+**** DONE external services
+**** DONE internal services
+**** DONE logging
+**** DONE smoke tests
+**** DONE capistrano
+**** DONE init
+
+
+
+
+
+
+
+
+
+
+* S-008
+** TODO HBASE TUNE
+*** TODO Client Setting
+**** TODO setCaching
+**** TODO hbase.block.cache.size
+**** TODO setBatch, setLimit
+*** TODO Storage Setting
+**** TODO regions ...
+**** TODO compression
+*** TODO Storage Maint
+**** TODO partitions
+*** TODO Snapshot
+**** TODO hive mapping
+*** TODO Export
+**** TODO hbase to ORC?
+*** TODO Encoding
+**** TODO AVRO
+* S-007
+** TODO FILTER
+*** TODO CLAUSE
+**** DONE where
+**** TODO having
+*** TODO PRED
+**** DONE operator
+**** DONE null
+**** bool
+**** DONE rel
+**** DONE range
+**** in
+**** TODO like
+**** TODO sql
+**** DONE format
+*** TODO TEST
+**** TODO builder
+** TODO VIRTUAL
+*** TODO METRIC
+**** TODO criteria
+**** TODO aggregation
+**** TODO preview
+**** TODO grouping
+*** TODO STATS
+**** TODO MEDIAN
+**** TODO QUARTILE
+**** TODO BOX PLOT
+** TODO VALIDATE
+*** TODO BASIC
+**** TODO SQL KEYWORDS
+** TODO MERGE
+*** TODO DESIGN
+**** TODO OPERATORS
+
+
+
+
+
+-------------------------------------------------------------------------
+
+* S-006
+
+** DATA
+*** MYSQL
+**** DONE dev.sys-db: table pantagruel*credentials
+**** DONE dev.sys-db: config credentials
+**** DONE qa.sys-db: table pantagruel*credentials
+**** DONE qa.sys-db: config credentials
+**** DONE cust-db: schema customer C3000386
+**** DONE cust-db: data customer   C3000386
+**** DONE cust_db: record dummy    subscrption_log, ...
+*** DEV.C385
+**** DONE ftp_data 
+**** DONE schema hive+vertica
+**** DONE i_users 
+**** TODO i_trans, i_prod, i_stores 
+**** DONE s_binlog: setup
+**** TODO bp_binlog 
+**** TODO ee_engage 
+**** DONE bv_users 
+**** TODO bv_trans 
+*** DEV.C206
+**** TODO ftp_data 
+**** TODO schema hive+vertica
+**** TODO i_users 
+**** TODO i_trans, i_prod, i_stores 
+**** TODO s_binlog: setup
+**** TODO bp_binlog 
+**** TODO ee_engage 
+**** TODO bv_users 
+**** TODO bv_trans 
+*** QA.C205
+**** TODO ftp_data 
+**** TODO schema hive+vertica
+**** TODO i_users 
+**** TODO i_trans, i_prod, i_stores 
+**** TODO s_binlog: setup
+**** TODO bp_binlog 
+**** TODO ee_engage 
+**** TODO bv_users 
+**** TODO bv_trans 
+*** QA.C386
+**** TODO ftp_data 
+**** TODO schema hive+vertica
+**** TODO i_users 
+**** TODO i_trans, i_prod, i_stores 
+**** TODO s_binlog: setup
+**** TODO bp_binlog 
+**** TODO ee_engage 
+**** TODO bv_users 
+**** TODO bv_trans 
+** CODE
+*** DEV
+**** DONE sewer
+**** DONE proxy
+**** DONE site
+**** DONE loader
+**** DONE milena
+*** QA
+**** TODO sewer
+**** TODO proxy
+**** TODO site
+**** TODO loader
+**** TODO milena
+** TEST
+*** DEV
+**** TODO IU
+**** TODO IT,IP,IS
+**** TODO SD
+**** TODO BP
+**** TODO EE
+**** TODO PU,LU
+**** TODO PT,LT
+*** QA
+**** TODO IU
+**** TODO IT,IP,IS
+**** TODO SD
+**** TODO BP
+**** TODO EE
+**** TODO PU,LU
+**** TODO PT,LT
+ 
+* S-005
+
+** DATA
+*** MYSQL
+**** DONE sys-db: table pantagruel*credentials
+**** DONE sys-db: config credentials C3000386
+**** DONE cust-db: schema customer C3000386
+**** DONE cust-db: data customer   C3000386
+**** DONE cust_db: record dummy    subscrption_log, ...
+*** HDFS
+**** DONE fs-share: TST/contactdata (oozie/hbase) deploy
+**** DONE fs-cust: TST/ jobs, data
+*** HIVE
+**** DONE data: LOADER
+**** TODO data: DIGITAL (ok)
+*** HBASE
+**** DONE i_ftp: ingest 
+**** TODO s_binlog: setup
+*** FTP
+**** TODO remote sftp data
+** CODE
+*** SITE
+**** DONE init folder
+**** DONE deploy qa
+**** DONE sqoop_patch
+**** DONE deploy site
+** CONF
+**** DONE local env config
+**** DONE share config
+**** DONE local spark config
+** NET
+*** AKKA
+**** TODO eugenio/akka ports
+**** TODO sewer/akka ports
+**** TODO milena/akka ports
+**** TODO vertica/akka ports
+*** REST
+**** DONE proxy
+**** DONE eugenio
+ 
+
+
+
+
+
+
+
+
+
+-----------------------------------------------------------------------
+
+* S-004
+
+** TASKS
+*** SITE
+**** TODO SYS-DB
+**** TODO CUST-DB
+**** TODO HDFS OUTPUT
+**** TODO LINK TABLE
+**** TODO DELIVERY_INFO TABLE
+**** TODO SQL CUSTOMER CRED
+
+
+
+
+
+-----------------------------------------------------------------------
+
+* S-003
+
+** TASKS
+*** PROXY
+**** TODO LOADER TYPE
+**** TODO ENRICH TYPE
+**** TODO SLIDES
+
+
+
+
+
+
+-----------------------------------------------------------------------
+
+* S-002
+
+** TASKS
+*** F2V.FQV
+**** TODO LABEL
+**** TODO INDENT
+**** DONE EXEC
+**** TODO external config
+**** TODO logging
+
+
+** DEMO
+*** F2V.FQV
+**** DONE RS2CSV
+**** DONE exec POST
+**** DONE data GET
+**** TODO postman collection
+
+
+
+
+
+
+
+
+-------------------------------------------------------------------------
+
+* S-001
+
+** TASKS
+*** PROXY
+**** DONE metadata_kind
+**** DONE metadata_type
+**** DONE standatd feeds
+**** TODO coordinator sched instance
+*** OOZIE
+**** DONE Job parameters args+ssh+curl
+**** DONE E_GENERIC
+*** DB
+**** DONE Schema upgrade
+*** DOC
+**** TODO json schema api
+
+
+** DEMO
+*** INGEST SPEC
+**** TODO Swagger + Mail
+
+*** I_USERS
+**** TODO [#A] users.csv generation
+*** TODO [#B] users.csv deploy
+*** TODO [#B] hbase users creation
+*** TODO [#B] metadata users check
+*** TODO [#C] test users ingest
+*** TODO [#B] cleanup users
+*** TODO [#A] zeppelin user view
+
+*** I_TRANSATIONS
+**** TODO transactions.csv generation
+*** TODO transactions.csv deploy
+*** TODO hbase transaction creation
+*** TODO metadata transactions check
+*** TODO test transactions ingest
+*** TODO cleanup transactions
+*** TODO hive transaction mapping
+*** TODO zeppelin users view
+
+*** I_PRODUCTS
+**** TODO products.csv generation
+*** TODO products.csv deploy
+*** TODO hbase products creation
+*** TODO metadata transactions check
+*** TODO test transactions ingest
+*** TODO cleanup transactions
+*** TODO hive transaction mapping
+*** TODO zeppelin transaction view
+
+*** I_STORES
+**** TODO stores.csv generation
+*** TODO stores.csv deploy
+*** TODO hbase stores creation
+*** TODO metadata stores check
+*** TODO test store ingest
+*** TODO cleanup store
+*** TODO hive store mapping
+*** TODO zeppelin store view
+
+*** E_ENGAGEMENT
+**** TODO integration eugenio/sewer
+*** TODO hbase engagement setup (dev)
+*** TODO test engagenet job
+*** TODO cleanup engagement resul
+*** TODO hive engagement mapping
+*** TODO zeppelin engagement view
+
+
+
+
+
+
+
+
+
+

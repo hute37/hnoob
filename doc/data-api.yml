@@ -1,0 +1,1860 @@
+swagger: '2.0'
+info:
+  version: 0.1.0
+  title: contactdata
+  description: |
+
+    Contactlab Data-API
+
+    The platform to manage algorithms to enrich and to get the potential goldmine from your BigData.
+
+    See <a href="https://confluence.contactlab.com/display/arch/Contact+Data+Platform">documentation on Confluence</a> for further details.
+
+  contact:
+    name: API Support
+    url: 'http://www.contactlab.com'
+    email: Team_BigData@contactlab.com
+  license:
+    name: Contactlab SPA
+    url: 'http://www.contactlab.com/en/'
+
+tags:
+  - name: user
+    description: Logged User
+  - name: template
+    description: Algorithm Template Configuration
+  - name: algorithms
+    description: Algorithms
+  - name: algorithm-config
+    description: Algorithm Configuration
+  - name: algorithm-control
+    description: Algorithm Execution Control
+  - name: provisioning
+    description: Workspace Provisioning
+  - name: updates
+    description: Updates API
+
+schemes:
+  - https
+
+host: api.contactlab.it
+basePath: /data/v1
+
+consumes:
+  - application/json
+produces:
+  - application/json
+
+securityDefinitions:
+  oauth:
+    type: oauth2
+    flow: implicit
+    authorizationUrl: https://login.contactlab.it
+    scopes:
+      any: any
+
+    description: Oauth2 platform login as described in <a href="https://confluence.contactlab.com/display/arch/Oauth2">documentation on Confluence</a>
+
+security:
+  - oauth:
+    - any
+
+
+parameters:
+  tracingIdHeader:
+    name: X-Tracing-Id
+    in: header
+    description: Caller log reference for logging
+    required: false
+    type: string
+  WORKSPACE_ID:
+    in: path
+    name: workspace-id
+    type: string
+    required: true
+    description: UUID of the workspace in which the algorithm is located
+  NODE_ID:
+    in: path
+    name: node-id
+    type: string
+    required: true
+    description: UUID of the node in which the algorithm is located
+  ALGORITHM_ID:
+    in: path
+    name: name
+    type: string
+    required: true
+    description: name of the algorithm
+  ALGORITHM_TEMPLATE_ID:
+    in: path
+    name: name
+    type: string
+    required: true
+    description: name of the algorithm
+    minLength: 3
+    maxLength: 20
+    pattern: '[A-Z][A-Z0-9-]*[A-Z0-9]'
+  INDUSTRY_ID:
+    in: path
+    name: industry
+    type: string
+    required: true
+    description: name of the industry
+  ALGORITHM_TEMPLATE_PARAMETER_ID:
+    in: path
+    name: parameter-name
+    type: string
+    required: true
+    description: name of the parameter
+  PORTFOLIO_ID:
+    in: path
+    name: portfolio-id
+    type: string
+    required: true
+    description: id of the portfolio
+  VISIBILITY_STATUS:
+    in: query
+    name: status
+    type: string
+    description: |
+      One of DRAFT, READY_PUBLIC, READY_PRIVATE
+    enum:
+    - DRAFT
+    - READY_PRIVATE
+    - READY_PUBLIC
+
+responses:
+  NotFound:
+    description: The specified resource was not found
+    schema:
+      $ref: "#/definitions/Errors"
+  Unauthorized:
+    description: Unauthorized
+    schema:
+      $ref: "#/definitions/Errors"
+  Forbidden:
+    description: Forbidden
+    schema:
+      $ref: "#/definitions/Errors"
+  Conflict:
+    description: Conflict
+    schema:
+      $ref: "#/definitions/Errors"
+  UnprocessableEntity:
+    description: UnprocessableEntity
+    schema:
+      $ref: "#/definitions/Errors"
+  BadRequest:
+    description: Bad Request
+    headers:
+      X-ApiResult:
+        type: string
+        enum:
+          - INVALID_FORMAT
+          - INVALID_DATA
+          - INVALID_PARAMETERS
+        description: |
+          * INVALID_FORMAT:     JSON Read Error
+          * INVALID_DATA:       Request Data Values Error
+          * INVALID_PARAMETERS: URL parameters Error (path,query)
+    schema:
+      $ref: '#/definitions/Errors'
+  default:
+    description: Unexpected error
+    headers:
+      X-ApiResult:
+        type: string
+        description: |
+          See https://confluence.contactlab.com/display/arch/Contact+Data+ApiResult
+    schema:
+      $ref: '#/definitions/Errors'
+
+
+#########################################################################
+### PATHS
+#########################################################################
+paths:
+
+# ===[ Provisioning ]============================================================
+
+  /admin/portfolios:
+    post:
+      description: |
+        Create new portfolio
+      parameters:
+        - name: portfolio
+          description: |
+            Portfolio data
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/IdentifiedPortfolio'
+      responses:
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '403':
+          $ref: '#/responses/Forbidden'
+        '404':
+          $ref: '#/responses/NotFound'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '201':
+          description: CREATED
+          headers:
+            location:
+              type: string
+              description: path to created resource
+          schema:
+            $ref: '#/definitions/IdentifiedPortfolio'
+        '422':
+          description: Unprocessable Entity
+          headers:
+            X-ApiResult:
+              type: string
+              enum:
+                - INVALID_INDUSTRY
+              description: |
+                * INVALID_INDUSTRY: unsupported industry
+          schema:
+            $ref: '#/definitions/Errors'
+        '409':
+          description: Conflict
+          headers:
+            X-ApiResult:
+              type: string
+              enum:
+                - PORTFOLIO_CONFLICT
+                - WORKSPACE_CONFLICT
+              description: |
+                * PORTFOLIO_CONFLICT: portfolio already present
+                * WORKSPACE_CONFLICT: workspace(s) already present
+          schema:
+            $ref: '#/definitions/Errors'
+      security:
+        - oauth: []
+      tags:
+        - provisioning
+
+    get:
+      description: |
+        Retrive all portfolios
+      parameters:
+        - in: query
+          name: page
+          type: integer
+          description: The requested page
+          default: 0
+          minimum: 0
+        - in: query
+          name: size
+          type: integer
+          description: The number of elements in a page
+          default: 20
+          minimum: 1
+          maximum: 40
+      responses:
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '403':
+          $ref: '#/responses/Forbidden'
+        '404':
+          $ref: '#/responses/NotFound'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/PagedPortfolio'
+      security:
+         - oauth: []
+      tags:
+        - provisioning
+
+  /admin/portfolios/{portfolio-id}:
+    get:
+      description: |
+        Retrive a portfolio
+      parameters:
+        - $ref: "#/parameters/PORTFOLIO_ID"
+      responses:
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '403':
+          $ref: '#/responses/Forbidden'
+        '404':
+          $ref: '#/responses/NotFound'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/IdentifiedPortfolio'
+      security:
+         - oauth: []
+      tags:
+        - provisioning
+    put:
+      description: |
+        Update a portfolio
+      parameters:
+        - $ref: "#/parameters/PORTFOLIO_ID"
+        - name: portfolio
+          description: |
+            Portfolio data
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Portfolio'
+      responses:
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '403':
+          $ref: '#/responses/Forbidden'
+        '404':
+          $ref: '#/responses/NotFound'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/IdentifiedPortfolio'
+      security:
+         - oauth: []
+      tags:
+        - provisioning
+
+    delete:
+      description: |
+        Delete a portfolio
+      parameters:
+        - $ref: "#/parameters/PORTFOLIO_ID"
+      responses:
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '403':
+          $ref: '#/responses/Forbidden'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '204':
+          description: Deleted
+      security:
+         - oauth: []
+      tags:
+        - provisioning
+
+  /admin/portfolios/{portfolio-id}/workspaces:
+    post:
+      description: |
+        Create a workspace
+      parameters:
+        - $ref: "#/parameters/PORTFOLIO_ID"
+        - name: workspace
+          description: |
+            Workspace data
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Workspace'
+      responses:
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '403':
+          $ref: '#/responses/Forbidden'
+        '404':
+          $ref: '#/responses/NotFound'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '409':
+          $ref: '#/responses/Conflict'
+        '201':
+          description: CREATED
+          schema:
+            $ref: '#/definitions/Workspace'
+      security:
+         - oauth: []
+      tags:
+        - provisioning
+
+  /admin/portfolios/{portfolio-id}/workspaces/{workspace-id}:
+    delete:
+      description: |
+        Delete a workspace
+      parameters:
+        - $ref: "#/parameters/PORTFOLIO_ID"
+        - $ref: "#/parameters/WORKSPACE_ID"
+      responses:
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '403':
+          $ref: '#/responses/Forbidden'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '204':
+          description: Deleted
+      security:
+         - oauth: []
+      tags:
+        - provisioning
+
+    get:
+      description: |
+        Get a workspace
+      parameters:
+        - $ref: "#/parameters/PORTFOLIO_ID"
+        - $ref: "#/parameters/WORKSPACE_ID"
+      responses:
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '403':
+          $ref: '#/responses/Forbidden'
+        '404':
+          $ref: '#/responses/NotFound'
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/Workspace'
+      security:
+         - oauth: []
+      tags:
+        - provisioning
+
+    put:
+      description: |
+        Update a workspace
+      parameters:
+        - $ref: "#/parameters/PORTFOLIO_ID"
+        - $ref: "#/parameters/WORKSPACE_ID"
+        - name: workspace
+          description: |
+            Workspace data
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/WorkspaceLabel'
+      responses:
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '403':
+          $ref: '#/responses/Forbidden'
+        '404':
+          $ref: '#/responses/NotFound'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '422':
+          $ref: '#/responses/UnprocessableEntity'
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/Workspace'
+      security:
+         - oauth: []
+      tags:
+        - provisioning
+
+  /admin/portfolios/{portfolio-id}/workspaces/{workspace-id}/nodes:
+    post:
+      description: |
+        Create a node
+      parameters:
+        - $ref: "#/parameters/PORTFOLIO_ID"
+        - $ref: "#/parameters/WORKSPACE_ID"
+        - name: workspace
+          description: |
+            Node data
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Node'
+      responses:
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '403':
+          $ref: '#/responses/Forbidden'
+        '404':
+          $ref: '#/responses/NotFound'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '409':
+          $ref: '#/responses/Conflict'
+        '201':
+          description: CREATED
+          schema:
+            $ref: '#/definitions/Node'
+      security:
+         - oauth: []
+      tags:
+        - provisioning
+
+  /admin/portfolios/{portfolio-id}/workspaces/{workspace-id}/nodes/{node-id}:
+    delete:
+      description: |
+        Delete a node
+      parameters:
+        - $ref: "#/parameters/PORTFOLIO_ID"
+        - $ref: "#/parameters/WORKSPACE_ID"
+        - $ref: "#/parameters/NODE_ID"
+      responses:
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '403':
+          $ref: '#/responses/Forbidden'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '204':
+          description: Deleted
+      security:
+         - oauth: []
+      tags:
+        - provisioning
+
+    get:
+      description: |
+        Get a node
+      parameters:
+        - $ref: "#/parameters/PORTFOLIO_ID"
+        - $ref: "#/parameters/WORKSPACE_ID"
+        - $ref: "#/parameters/NODE_ID"
+      responses:
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '403':
+          $ref: '#/responses/Forbidden'
+        '404':
+          $ref: '#/responses/NotFound'
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/Node'
+      security:
+         - oauth: []
+      tags:
+        - provisioning
+
+    put:
+      description: |
+        Update a node
+      parameters:
+        - $ref: "#/parameters/PORTFOLIO_ID"
+        - $ref: "#/parameters/WORKSPACE_ID"
+        - $ref: "#/parameters/NODE_ID"
+        - name: node
+          description: |
+            Node data
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/NodeLabel'
+      responses:
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '403':
+          $ref: '#/responses/Forbidden'
+        '404':
+          $ref: '#/responses/NotFound'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '422':
+          $ref: '#/responses/UnprocessableEntity'
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/Workspace'
+      security:
+         - oauth: []
+      tags:
+        - provisioning
+
+# ===[ User ]=============================================================
+
+  /me:
+    get:
+      description: Gets all the info of logged user
+      responses:
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/UserInfo'
+        '503':
+          description: Service Unavailable
+          headers:
+            X-ApiResult:
+              type: string
+              enum:
+                - SERVICE_UNAVAILABLE_50110
+              description: |
+                * SERVICE_UNAVAILABLE_50110: service error (AccountCentral)
+          schema:
+            $ref: '#/definitions/Errors'
+      security:
+         - oauth: []
+      tags:
+        - user
+
+# ===[ Template ]=============================================================
+
+  /admin/templates:
+
+    get:
+      description: |
+        Retrieve the list of algorithm templates
+      parameters:
+        - $ref: "#/parameters/VISIBILITY_STATUS"
+        - name: style
+          in: query
+          description: 'if extended shows the values of params'
+          type: string
+          default: 'compact'
+          required: false
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/PagedAlgorithmTemplate'
+        '404':
+          description: Resource not found
+      security:
+        - oauth: []
+      tags:
+        - template
+
+    post:
+      description: |
+        Create a new algorithm template
+      parameters:
+        - name: AlgorithmTemplate
+          description: |
+            Algorithm Template data
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/IdentifiedAlgorithmTemplateWithValues'
+      responses:
+        '201':
+          description: Created
+          headers:
+            location:
+              type: string
+              description: path to created resource
+          schema:
+            $ref: '#/definitions/IdentifiedAlgorithmTemplateWithAll'
+        '404':
+          description: Resource not found
+        '422':
+          description: Unprocessable Entity
+          headers:
+            X-ApiResult:
+              type: string
+              enum:
+                - INVALID_ALGORITHM_TEMPLATE
+              description: |
+                * INVALID_ALGORITHM_TEMPLATE: unsupported AlgorithmTemplate
+          schema:
+            $ref: '#/definitions/Errors'
+        '409':
+          description: Conflict
+          headers:
+            X-ApiResult:
+              type: string
+              enum:
+                - ALGORITHM_TEMPLATE_CONFLICT
+              description: |
+                * ALGORITHM_TEMPLATE_CONFLICT: Algorithm Template already present
+          schema:
+            $ref: '#/definitions/Errors'
+      security:
+        - oauth: []
+      tags:
+        - template
+
+
+  /admin/templates/{name}:
+    get:
+      description: |
+        Create a new algorithm template
+      parameters:
+        - $ref: "#/parameters/ALGORITHM_TEMPLATE_ID"
+        - name: style
+          in: query
+          description: 'if extended shows the values of params'
+          type: string
+          default: 'compact'
+          required: false
+      responses:
+        '200':
+          description: Found
+          schema:
+            $ref: '#/definitions/IdentifiedAlgorithmTemplateWithAll'
+        '404':
+          description: Resource not found
+          schema:
+            $ref: '#/definitions/Errors'
+      security:
+        - oauth: []
+      tags:
+        - template
+
+    put:
+      description: |
+        Update an algorithm template
+      parameters:
+        - $ref: "#/parameters/ALGORITHM_TEMPLATE_ID"
+        - name: AlgorithmTemplate
+          description: |
+            Algorithm Template data
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/AlgorithmTemplateWithValues'
+      responses:
+        '200':
+          description: Updated
+          schema:
+            $ref: '#/definitions/IdentifiedAlgorithmTemplateWithAll'
+        '404':
+          description: Resource not found
+        '422':
+          description: Unprocessable Entity
+          headers:
+            X-ApiResult:
+              type: string
+              enum:
+                - INVALID_ALGORITHM_TEMPLATE
+              description: |
+                * INVALID_ALGORITHM_TEMPLATE: unsupported AlgorithmTemplate
+          schema:
+            $ref: '#/definitions/Errors'
+      security:
+        - oauth: []
+      tags:
+        - template
+
+    delete:
+      description: |
+        Delete an algorithm template if not used
+      parameters:
+        - $ref: "#/parameters/ALGORITHM_TEMPLATE_ID"
+      responses:
+        '204':
+          description: Resource algorithm template has been deleted
+        '404':
+          description: Resource not found
+      security:
+        - oauth: []
+      tags:
+        - template
+
+
+
+
+
+# ===[ Config ]=============================================================
+
+  /workspaces/{workspace-id}/nodes/{node-id}/algorithms:
+    get:
+      description: |
+        Retrive an algorithm algorithmInstance of a defined work
+      parameters:
+        - $ref: "#/parameters/WORKSPACE_ID"
+        - $ref: "#/parameters/NODE_ID"
+      responses:
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '403':
+          $ref: '#/responses/Forbidden'
+        '404':
+          $ref: '#/responses/NotFound'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '200':
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Algorithm'
+      security:
+         - oauth: []
+      tags:
+        - algorithms
+
+  /workspaces/{workspace-id}/nodes/{node-id}/algorithms/{name}:
+    get:
+      description: |
+        Get a single algorithm
+      parameters:
+        - $ref: "#/parameters/WORKSPACE_ID"
+        - $ref: "#/parameters/NODE_ID"
+        - $ref: "#/parameters/ALGORITHM_ID"
+      responses:
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '403':
+          $ref: '#/responses/Forbidden'
+        '404':
+          $ref: '#/responses/NotFound'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/Algorithm'
+      security:
+        - oauth: []
+      tags:
+        - algorithms
+
+  /workspaces/{workspace-id}/nodes/{node-id}/algorithms/{name}/logs:
+    get:
+      description: |
+        Get the logs of an algorithm
+      responses:
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '403':
+          $ref: '#/responses/Forbidden'
+        '404':
+          $ref: '#/responses/NotFound'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/PagedAlgorithmLog'
+      parameters:
+        - $ref: '#/parameters/WORKSPACE_ID'
+        - $ref: "#/parameters/NODE_ID"
+        - $ref: '#/parameters/ALGORITHM_ID'
+        - in: query
+          name: page
+          type: integer
+          description: The requested page
+          default: 0
+          minimum: 0
+        - in: query
+          name: size
+          type: integer
+          description: The number of elements in a page
+          default: 20
+          minimum: 1
+          maximum: 40
+        - name: sort
+          in: query
+          type: string
+          required: false
+        - name: fromDate
+          in: query
+          type: string
+          format: date-time
+          required: false
+        - name: toDate
+          in: query
+          type: string
+          format: date-time
+          required: false
+      security:
+        - oauth: []
+      tags:
+        - algorithms
+
+  /workspaces/{workspace-id}/nodes/{node-id}/algorithms/{name}/configuration:
+    put:
+      description: |
+        Update the status of an algorithm
+      parameters:
+        - $ref: "#/parameters/WORKSPACE_ID"
+        - $ref: "#/parameters/NODE_ID"
+        - $ref: "#/parameters/ALGORITHM_ID"
+        - name: status
+          description: |
+            Status of the algorithm
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/AlgorithmInstanceConfigurationRequest'
+      responses:
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '403':
+          $ref: '#/responses/Forbidden'
+        '404':
+          $ref: '#/responses/NotFound'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/AlgorithmInstanceConfigurationResponse'
+        '422':
+          description: Unprocessable Entity
+          headers:
+            X-ApiResult:
+              type: string
+              enum:
+                - ALGORITHM_INVALID_PARAMS
+                - ALGORITHM_NOT_ACTIVABLE
+              description: |
+                * ALGORITHM_INVALID_PARAMS: Parameters are inconsistent
+                * ALGORITHM_NOT_ACTIVABLE: the algorithm is not activable because is missing data
+          schema:
+            $ref: '#/definitions/Errors'
+      security:
+        - oauth: []
+      tags:
+        - algorithm-config
+
+  /workspaces/{workspace-id}/nodes/{node-id}/algorithms/{name}/base-configuration:
+    put:
+      description: |
+        Update the status of an algorithm
+      parameters:
+        - $ref: "#/parameters/WORKSPACE_ID"
+        - $ref: "#/parameters/NODE_ID"
+        - $ref: "#/parameters/ALGORITHM_ID"
+        - name: status
+          description: |
+            Status of the algorithm
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/AlgorithmInstanceBaseConfigurationRequest'
+      responses:
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '403':
+          $ref: '#/responses/Forbidden'
+        '404':
+          $ref: '#/responses/NotFound'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/AlgorithmInstanceBaseConfigurationResponse'
+        '422':
+          description: Unprocessable Entity
+          headers:
+            X-ApiResult:
+              type: string
+              enum:
+                - ALGORITHM_INVALID_PARAMS
+                - ALGORITHM_NOT_ACTIVABLE
+              description: |
+                * ALGORITHM_INVALID_PARAMS: Parameters are inconsistent
+                * ALGORITHM_NOT_ACTIVABLE: the algorithm is not activable because is missing data
+
+          schema:
+            $ref: '#/definitions/Errors'
+      security:
+         - oauth: []
+      tags:
+        - algorithm-config
+
+
+# ===[ Control ]===========================================================
+
+  /workspaces/{workspace-id}/nodes/{node-id}/algorithms/{name}/schedule:
+    put:
+      description: |
+        Update the status of an algorithm
+      parameters:
+        - $ref: "#/parameters/WORKSPACE_ID"
+        - $ref: "#/parameters/NODE_ID"
+        - $ref: "#/parameters/ALGORITHM_ID"
+        - name: schedule
+          description: |
+            Schedule of the algorithm
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/AlgorithmSchedule'
+      responses:
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '403':
+          $ref: '#/responses/Forbidden'
+        '404':
+          $ref: '#/responses/NotFound'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/AlgorithmSchedule'
+        '422':
+          description: Unprocessable Entity
+          headers:
+            X-ApiResult:
+              type: string
+              enum:
+                - ALGORITHM_INVALID_SCHEDULE
+                - ALGORITHM_NOT_ACTIVABLE
+              description: |
+                * ALGORITHM_INVALID_SCHEDULE: invalid schedule specification
+                * ALGORITHM_NOT_ACTIVABLE: the algorithm is not activable because is missing data
+          schema:
+            $ref: '#/definitions/Errors'
+        '503':
+          description: Service Unavailable
+          headers:
+            X-ApiResult:
+              type: string
+              enum:
+                - SERVICE_UNAVAILABLE_50310
+              description: |
+                * SERVICE_UNAVAILABLE_50310: service error (DataScheduler)
+          schema:
+            $ref: '#/definitions/Errors'
+      security:
+         - oauth: []
+      tags:
+        - algorithm-control
+
+
+# ===[ Updates ]=============================================================
+
+  '/workspaces/{workspace-id}/nodes/{node-id}/updates/last-offset':
+    get:
+      description: get the offset of the last update and list of active regions
+      parameters:
+        - $ref: "#/parameters/WORKSPACE_ID"
+        - $ref: "#/parameters/NODE_ID"
+        - name: expand
+          in: query
+          description: |
+              conditional response inclusion:
+              * KPI: include regions details for all kpi datasets
+          type: array
+          collectionFormat: csv
+          items:
+            type: string
+            enum:
+              - KPI
+          required: false
+      security:
+        - oauth: []
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: 'the offset has been returned'
+          schema:
+            $ref: '#/definitions/LastOffsetResponse'
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '403':
+          $ref: '#/responses/Forbidden'
+        '404':
+          $ref: '#/responses/NotFound'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '503':
+          description: Service Unavailable
+          headers:
+            X-ApiResult:
+              type: string
+              enum:
+                - SERVICE_UNAVAILABLE_50310
+              description: |
+                * SERVICE_UNAVAILABLE_50310: service error (DataScheduler)
+          schema:
+            $ref: '#/definitions/Errors'
+      tags:
+        - updates
+
+  '/workspaces/{workspace-id}/nodes/{node-id}/updates':
+    get:
+      description: 'get the stream of updates on customers and events'
+      parameters:
+        - $ref: "#/parameters/WORKSPACE_ID"
+        - $ref: "#/parameters/NODE_ID"
+        - name: startOffset
+          description: 'The greather offset known by the client (not included in the returned result)'
+          in: query
+          type: string
+          pattern: '^x-\d{20}$'
+          required: true
+        - name: endOffset
+          description: 'The offset of the last record in the resulting batch of updates (included in the result)'
+          in: query
+          type: string
+          pattern: '^x-\d{20}$'
+          required: false
+        - name: size
+          in: query
+          description: 'Page size, max number of item returned (optional, default set by the server)'
+          type: integer
+          minimum: 151
+          default: 1000
+          required: false
+        - name: history
+          description: 'include history data in result'
+          in: query
+          type: boolean
+          default: true
+          required: false
+      security:
+        - oauth: []
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: 'Successful response'
+          schema:
+            $ref: '#/definitions/UpdatesResponse'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '403':
+          $ref: '#/responses/Forbidden'
+        '404':
+          $ref: '#/responses/NotFound'
+      tags:
+        - updates
+
+#########################################################################
+### DEFINITIONS
+#########################################################################
+definitions:
+
+# ===[ Common ]============================================================
+
+  SortingEntry:
+    type: object
+    properties:
+      field:
+        type: string
+        enum:
+          - triggeredDate
+        description: Name of the field you want to sort the results on
+      direction:
+        type: string
+        enum:
+          - asc
+          - desc
+
+  Errors:
+    title: Error resource
+    type: object
+    properties:
+      message:
+        type: string
+        description: Descriptive error message (English)
+      logref:
+        type: string
+        description: Unique identifier that is reported in the application log
+      data:
+        type: object
+        description: Specific error data
+      errors:
+        description: Sub-errors array
+        type: array
+        items:
+          type: object
+          properties:
+            path:
+              type: string
+              description: JSON pointer to the invalid property
+            message:
+              type: string
+              description: Descriptive error message (English)
+            code:
+              type: string
+              description: Custom error code related to the path
+            data:
+              type: object
+              description: Specific error data
+          required: [path, message]
+    required: [message, logref]
+
+  Page:
+    type: object
+    properties:
+      size:
+        description: the requested size of the page
+        type: integer
+      totalElements:
+        description: total number of elements available
+        type: integer
+      totalPages:
+        description: how many pages are available in total
+        type: integer
+      number:
+        description: the number of the current page
+        type: integer
+    required: ["size", "totalElements", "totalPages", "number"]
+
+# ===[ Provisioning ]============================================================
+
+  Portfolio:
+    type: object
+    properties:
+      label:
+        type: string
+        description: |
+          Customer label
+    required: ["label"]
+
+  IdentifiedPortfolio:
+    type: object
+    allOf:
+      - $ref: '#/definitions/Portfolio'
+      - properties:
+          id:
+            type: string
+            pattern: '[A-Za-z][A-Za-z0-9-]*[a-zA-Z0-9]'
+            description: |
+              Customer id (string value of the groupPK or other)
+          workspaces:
+            type: array
+            description: List of workspaces provisioning configurations
+            items:
+              $ref: '#/definitions/Workspace'
+          industry:
+            type: string
+            description: |
+              A valid industry for Contactlab
+        required: ["id", "workspaces", "label", "industry"]
+
+  PagedPortfolio:
+    type: object
+    properties:
+      elements:
+        description: the list of events
+        type: array
+        items:
+          $ref: '#/definitions/IdentifiedPortfolio'
+      page:
+        $ref: '#/definitions/Page'
+    required: ["page"]
+
+  WorkspaceLabel:
+    type: object
+    description: Workspace for put
+    properties:
+      label:
+        type: string
+        description: |
+          Name associated to the workspace
+    required: ["label"]
+
+  Workspace:
+    type: object
+    description: Workspace
+    allOf:
+      - properties:
+          id:
+            type: string
+            pattern: '[0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12}' #less restrictive than UUID definition,
+            description: |
+              Workspace unique id
+          nodes:
+            type: array
+            items:
+              $ref: '#/definitions/Node'
+      - $ref: '#/definitions/WorkspaceLabel'
+    required: ["id", "label"]
+
+  NodeLabel:
+    type: object
+    description: node for put
+    properties:
+      label:
+        type: string
+        description: |
+          Name associated to the node
+    required: ["label"]
+
+  Node:
+    type: object
+    description: Node
+    allOf:
+      - properties:
+          id:
+            type: string
+            pattern: '[0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12}' #less restrictive than UUID definition,
+            description: |
+              Node unique id
+      - $ref: '#/definitions/NodeLabel'
+    required: ["id", "label"]
+
+# ===[ User ]============================================================
+
+  UserInfo:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: |
+          User ID
+      name:
+        type: string
+        description: |
+          User name
+      surname:
+        type: string
+        description: |
+          User surname
+      lang:
+        type: string
+        description: |
+          User language, parsed from query String
+      roles:
+        type: array
+        description: |
+          User Oauth role
+        items:
+          type: string
+      portfolios:
+        type: array
+        description: List of portfolios associated with the user
+        items:
+          $ref: '#/definitions/IdentifiedPortfolio'
+
+# ===[ Template ]============================================================
+
+  IdentifiedAlgorithmTemplateWithValues:
+    type: object
+    allOf:
+      - properties:
+          name:
+            type: string
+            minLength: 3
+            maxLength: 20
+            pattern: '[A-Z][A-Z0-9-]*[A-Z0-9]'
+            description: |
+              Unique name. It identifies the algorithm template.
+        required: ["name"]
+      - $ref: '#/definitions/AlgorithmTemplateWithValues'
+  AlgorithmTemplateWithAll:
+    type: object
+    allOf:
+      - properties:
+          author:
+            type: string
+            description: |
+              Name of creator.
+          lastUpdateAuthor:
+            type: string
+            description: |
+             Name of last update author.
+          creationDate:
+            type: string
+            format: date-time
+          updateDate:
+            type: string
+            format: date-time
+        required: ["author", "lastUpdateAuthor", "creationDate", "updateDate"]
+      - $ref: '#/definitions/AlgorithmTemplateWithValues'
+  IdentifiedAlgorithmTemplateWithAll:
+    type: object
+    allOf:
+      - properties:
+         name:
+              type: string
+              minLength: 3
+              maxLength: 20
+              pattern: '[A-Z][A-Z0-9-]*[A-Z0-9]'
+              description: |
+                Unique name. It identifies the algorithm template.
+        required: ["name"]
+      - $ref: '#/definitions/AlgorithmTemplateWithAll'
+
+  PagedAlgorithmTemplate:
+    type: object
+    properties:
+      elements:
+        description: the list of events
+        type: array
+        items:
+          $ref: '#/definitions/IdentifiedAlgorithmTemplateWithAll'
+      page:
+        $ref: '#/definitions/Page'
+    required: ["page"]
+
+  AlgorithmTemplateAbstract:
+    type: object
+    properties:
+      description:
+        type: string
+        description: |
+          A simple description of the algorithm template
+      visibilityStatus:
+        type: string
+        enum:
+        - DRAFT
+        - READY_PRIVATE
+        - READY_PUBLIC
+      kpiKind:
+        type: string
+        enum:
+        - USER
+        - WORKSPACE
+      maxFrequency:
+        type: string
+        enum:
+        - DAILY
+        - WEEKLY
+        - MONTHLY
+      tags:
+        type: array
+        items:
+          type: string
+      version:
+        type: string
+      schedule:
+        $ref: '#/definitions/AlgorithmTemplateSchedule'
+    required: ["visibilityStatus"]
+
+  AlgorithmTemplateWithValues:
+    type: object
+    allOf:
+      - properties:
+          baseConfiguration:
+            $ref: '#/definitions/AlgorithmTemplateBaseConfigurationWithValues'
+          configuration:
+            $ref: '#/definitions/AlgorithmTemplateConfigurationWithValues'
+      - $ref: '#/definitions/AlgorithmTemplateAbstract'
+
+# ===[ Config ]============================================================
+
+  Algorithm:
+    type: object
+    properties:
+      name:
+        type: string
+        description: |
+          Unique name to identify an algorithm resource
+      description:
+        type: string
+        description: |
+          A simple description of the algorithm
+      activable:
+        type: boolean
+        description: |
+          Algorithm could be defined, but not able to run as there is no data
+      visibilityStatus:
+        type: string
+        enum:
+        - READY_PUBLIC
+        - READY_PRIVATE
+      kpiKind:
+        type: string
+        enum:
+        - USER
+        - WORKSPACE
+      version:
+        type: string
+      maxFrequency:
+        type: string
+      tags:
+        type: array
+        items:
+          type: string
+      baseConfiguration:
+        $ref: '#/definitions/AlgorithmInstanceBaseConfigurationResponse'
+      configuration:
+        $ref: '#/definitions/AlgorithmInstanceConfigurationResponse'
+      lastExecutionStatus:
+        $ref: '#/definitions/AlgorithmExecutionStatus'
+      schedule:
+        $ref: '#/definitions/AlgorithmScheduleGet'
+
+  AlgorithmTemplateSchedule:
+    description: The current schedule status of the algorithm template
+    type: object
+    properties:
+      scheduleExpression:
+          $ref: '#/definitions/AlgorithmTemplateScheduleExpression'
+
+  AlgorithmSchedule:
+    description: The current schedule status of the algorithm
+    type: object
+    properties:
+      enabled:
+          type: boolean
+          description: |
+            The algorithm's schedulation is on
+      scheduleExpression:
+        $ref: '#/definitions/AlgorithmScheduleExpression'
+    required: ["enabled", "scheduleExpression"]
+
+  AlgorithmScheduleGet:
+    allOf:
+    - properties:
+        nextScheduledExecution:
+          type: string
+          format:  date-time
+    -  $ref: '#/definitions/AlgorithmSchedule'
+
+  AlgorithmExecutionStatus:
+    description: The report of the last execution
+    type: object
+    properties:
+      triggeredDate:
+        type: string
+        format: date-time
+      effectiveStartDate:
+        type: string
+        format: date-time
+      endDate:
+        type: string
+        format: date-time
+      status:
+        type: string
+        enum:
+          - TRIGGERED
+          - TRIGGERED_FAILED
+          - NEW
+          - READY_FOR_START
+          - READY_FOR_RETRY
+          - RUNNING
+          - OK
+          - KO
+      totalUsers:
+        type: integer
+        format: int64
+      computedUsers:
+        type: integer
+        format: int64
+    required: ["status"]
+
+  AlgorithmTemplateBaseConfiguration:
+    description: Base (immutable) configuration associated with the algorithm
+    type: object
+    properties:
+      parameters:
+        type: array
+        description: List of parameters for this configuration
+        items:
+          $ref: '#/definitions/AlgorithmTemplateParameter'
+    required: ["parameters"]
+
+  AlgorithmTemplateBaseConfigurationWithValues:
+    description: Base (immutable) configuration associated with the algorithm
+    type: object
+    properties:
+      parameters:
+        type: array
+        description: List of parameters for this configuration
+        items:
+          $ref: '#/definitions/AlgorithmTemplateParameterWithValues'
+    required: ["parameters"]
+
+  AlgorithmInstanceBaseConfigurationResponse:
+    description: Base (immutable) configuration associated with the algorithm
+    type: object
+    properties:
+      parameters:
+        type: array
+        description: List of parameters for this configuration
+        items:
+          $ref: '#/definitions/AlgorithmInstanceParameterResponse'
+    required: ["parameters"]
+
+  AlgorithmInstanceBaseConfigurationRequest:
+    description: Base (immutable) configuration associated with the algorithm
+    type: object
+    properties:
+      parameters:
+        type: array
+        description: List of parameters for this configuration
+        items:
+          $ref: '#/definitions/AlgorithmInstanceParameterRequest'
+    required: ["parameters"]
+
+  AlgorithmTemplateConfiguration:
+    description: (mutable) configuration associated with the algorithm
+    type: object
+    properties:
+      parameters:
+        type: array
+        description: List of parameters for this configuration
+        items:
+          $ref: '#/definitions/AlgorithmTemplateParameter'
+    required: ["parameters"]
+
+  AlgorithmTemplateConfigurationWithValues:
+    description: (mutable) configuration associated with the algorithm
+    type: object
+    properties:
+      parameters:
+        type: array
+        description: List of parameters for this configuration
+        items:
+          $ref: '#/definitions/AlgorithmTemplateParameterWithValues'
+    required: ["parameters"]
+
+  AlgorithmInstanceConfigurationRequest:
+    description: (mutable) configuration associated with the algorithm
+    type: object
+    properties:
+      parameters:
+        type: array
+        description: List of parameters for this configuration
+        items:
+          $ref: '#/definitions/AlgorithmInstanceParameterRequest'
+    required: ["parameters"]
+
+  AlgorithmInstanceConfigurationResponse:
+    description: (mutable) configuration associated with the algorithm
+    type: object
+    properties:
+      parameters:
+        type: array
+        description: List of parameters for this configuration
+        items:
+          $ref: '#/definitions/AlgorithmInstanceParameterResponse'
+    required: ["parameters"]
+
+  NamedParameter:
+    type: object
+    properties:
+      name:
+        type: string
+    required: ["name"]
+
+  AlgorithmTemplateParameter:
+    type: object
+    allOf:
+      - properties:
+          label:
+            type: string
+          dataType:
+            type: string
+            enum:
+              - STRING
+              - LONG
+              - DOUBLE
+              - DATE
+              - RUNTIME_DATE
+        required: ["name", "dataType"]
+      - $ref: '#/definitions/NamedParameter'
+
+  AlgorithmTemplateParameterWithValues:
+    type: object
+    allOf:
+      - properties:
+          values:
+            type: array
+            items:
+              $ref: '#/definitions/TemplateParameterValueRequest'
+      - $ref: '#/definitions/AlgorithmTemplateParameter'
+
+  AlgorithmInstanceParameterResponse:
+    type: object
+    allOf:
+      - $ref: '#/definitions/AlgorithmTemplateParameter'
+      - $ref: '#/definitions/ParameterValueRequest'
+
+  AlgorithmInstanceParameterRequest:
+    type: object
+    allOf:
+      - $ref: '#/definitions/NamedParameter'
+      - $ref: '#/definitions/ParameterValueRequest'
+
+  ParameterValueRequest:
+     type: object
+     properties:
+       value:
+         type: string
+     required: ["value"]
+
+  TemplateParameterValueRequest:
+    type: object
+    allOf:
+      - properties:
+          industry:
+            type: string
+      - $ref: '#/definitions/ParameterValueRequest'
+    required: ["industry", "value"]
+
+
+  AlgorithmTemplateScheduleExpression:
+    type: object
+    properties:
+      minute:
+        type: integer
+        format: int32
+        minimum: 0
+        maximum: 59
+      hour:
+        type: integer
+        format: int32
+        minimum: 0
+        maximum: 23
+      daysOfMonth:
+        type: array
+        items:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 31
+      daysOfWeek:
+        type: array
+        items:
+         type: string
+         enum:
+          - MON
+          - TUE
+          - WED
+          - THU
+          - FRI
+          - SAT
+          - SUN
+      months:
+        type: array
+        items:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 12
+  ParameterIndustryValue:
+       type: object
+       properties:
+         value:
+           type: string
+
+  AlgorithmScheduleExpression:
+    allOf:
+      - $ref: '#/definitions/AlgorithmTemplateScheduleExpression'
+      - properties:
+          timeZone:
+            type: string
+    required: ["minute", "hour", "timeZone"]
+
+  PagedAlgorithmLog:
+    type: object
+    properties:
+      elements:
+        description: the list of events
+        type: array
+        items:
+          $ref: '#/definitions/AlgorithmExecutionStatus'
+      page:
+        $ref: '#/definitions/Page'
+      filters:
+        type: object
+        properties:
+          fromDate:
+            type: string
+            format: date-time
+          toDate:
+            type: string
+            format: date-time
+      sorting:
+        type: array
+        items:
+          $ref: '#/definitions/SortingEntry'
+
+
+
+# ===[ Updates ]============================================================
+
+  LastOffsetResponse:
+    description: 'the last offset of the requested stream of updates'
+    type: object
+    additionalProperties: false
+    properties:
+      lastOffset:
+        type: string
+        pattern: '^x-\d{20}$'
+      kpis:
+        type: array
+        items:
+          $ref: '#/definitions/KPIRegionResource'
+
+  KPIRegionResource:
+    description: 'An update data region, produced by a single batch computation'
+    type: object
+    additionalProperties: false
+    properties:
+      jobTime:
+        type: string
+        format: date-time
+        description: 'the region computation time'
+      kpiName:
+        type: string
+        description: 'data set name'
+      refId:
+        type: string
+        description: 'data batch reference instance id'
+      refIdPrev:
+        type: string
+        description: 'previous (by source) data batch reference instance id'
+      baseOffset:
+        type: string
+        pattern: '^x-\d{20}$'
+        description: 'region base offset (exclusive)'
+      lastOffset:
+        type: string
+        pattern: '^x-\d{20}$'
+        description: 'region last offset (inclusive)'
+      rowCount:
+        type: integer
+        format: int64
+        description: 'region size (row count)'
+
+  UpdatesResponse:
+    description: 'the result of a call to the updates api'
+    type: object
+    additionalProperties: false
+    properties:
+      workspace:
+        type: string
+      updates:
+        description: The algorithm results
+        type: array
+        items:
+          $ref: '#/definitions/KPIItemResource'
+      nextOffset:
+        type: string
+        pattern: '^x-\d{20}$'
+
+  KPIItemResource:
+    description: 'An algorithm result item identified by <kpi_target,kpi_name>'
+    type: object
+    additionalProperties: false
+    properties:
+      offset:
+        type: string
+        pattern: '^x-\d{20}$'
+        description: 'The algorithm results (depends on the algorithm)'
+      kpiKind:
+        type: string
+        enum:
+          - USER
+        description: 'the type of target UUID'
+      kpiTarget:
+        type: string
+        description: 'the UUID of this item target (i.e. the "user")'
+      kpiName:
+        type: string
+        description: 'data set name'
+      schemaName:
+        type: string
+        description: 'the name of the json data schema'
+      refId:
+        type: string
+        description: 'data batch reference instance id'
+      data:
+        type: object
+        description: 'The algorithm results (depends on the algorithm, described by schema)'
+      hist:
+        type: array
+        description: 'Stored history of the algorithm results (max array size depends on the algorithm)'
+        items:
+          $ref: '#/definitions/KPIUpdatesHistoryItem'
+
+  KPIUpdatesHistoryItem:
+    description: 'an item of the updates history'
+    type: object
+    properties:
+      t:
+        type: string
+        description: 'data batch reference instance id'
+      v:
+        type: object
+        description: 'The algorithm results (depends on the algorithm, described by schema)'
